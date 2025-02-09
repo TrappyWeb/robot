@@ -27,8 +27,14 @@ Route::get('scrape', function (Request $request, Response $response) {
         return Http::get($request->uri);
     }
 
-    $text = (fn(): HTML => app()->make(HTML::class))()
-        ->getRawHTML($request->uri);
+    try {
+        $text = (fn(): HTML => app()->make(HTML::class))()
+            ->getRawHTML($request->uri);
+    } catch (Exception $e) {
+        return $response
+            ->setStatusCode(Response::HTTP_INTERNAL_SERVER_ERROR)
+            ->setContent($e->getMessage());
+    }
 
     if ((new HTMLBlockDetector())($text)) {
         return $response
