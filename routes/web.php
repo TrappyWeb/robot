@@ -27,10 +27,8 @@ Route::get('scrape', function (Request $request, Response $response) {
         return Http::get($request->uri);
     }
 
-    $callable = fn() => (fn(): HTML => app()->make(HTML::class))()
+    $text = (fn(): HTML => app()->make(HTML::class))()
         ->getRawHTML($request->uri);
-
-    $text = $callable();
 
     if ((new HTMLBlockDetector())($text)) {
         return $response
