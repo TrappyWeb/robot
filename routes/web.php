@@ -30,17 +30,13 @@ Route::get('scrape', function (Request $request, Response $response) {
     $callable = fn() => (fn(): HTML => app()->make(HTML::class))()
         ->getRawHTML($request->uri);
 
-    for ($i = 0; $i < 3; $i++) {
-        $text = $callable();
+    $text = $callable();
 
-        $blocked = (new HTMLBlockDetector())($text);
-
-        if ($blocked === false) {
-            return $text;
-        }
+    if ((new HTMLBlockDetector())($text)) {
+        return $response
+            ->setStatusCode(Response::HTTP_SERVICE_UNAVAILABLE)
+            ->setContent($text);
     }
 
-    return $response
-        ->setStatusCode(Response::HTTP_SERVICE_UNAVAILABLE)
-        ->setContent($text);
+    return $text;
 });
