@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\Http\Scrapper\HTML;
+use App\Services\Http\Scrapper\HTMLBlockDetector;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Http;
@@ -26,6 +27,20 @@ Route::get('scrape', function (Request $request, Response $response) {
         return Http::get($request->uri);
     }
 
-    return (fn(): HTML => app()->make(HTML::class))()
+    $callable = fn() => (fn(): HTML => app()->make(HTML::class))()
         ->getRawHTML($request->uri);
+
+    for ($i = 0; $i < 3; $i++) {
+        $text = $callable();
+
+        $blocked = (new HTMLBlockDetector())($text);
+
+        if ($blocked === false) {
+            return $text;
+        }
+    }
+
+    return $response
+        ->setStatusCode(Response::HTTP_SERVICE_UNAVAILABLE)
+        ->setContent($text);
 });
